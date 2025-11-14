@@ -1,0 +1,84 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.example.barcodegenerator'
+    compileSdk 34
+
+    def hasReleaseKeystore = System.getenv("RELEASE_STORE_FILE") != null &&
+            System.getenv("RELEASE_STORE_PASSWORD") != null &&
+            System.getenv("RELEASE_KEY_ALIAS") != null &&
+            System.getenv("RELEASE_KEY_PASSWORD") != null
+
+    signingConfigs {
+        if (hasReleaseKeystore) {
+            release {
+                storeFile file(System.getenv("RELEASE_STORE_FILE"))
+                storePassword System.getenv("RELEASE_STORE_PASSWORD")
+                keyAlias System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword System.getenv("RELEASE_KEY_PASSWORD")
+                v1SigningEnabled true
+                v2SigningEnabled true
+            }
+        }
+    }
+
+    defaultConfig {
+        applicationId 'com.example.barcodegenerator'
+        minSdk 23
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (hasReleaseKeystore) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+
+    // ZXing core for generating barcodes/QR codes
+    implementation 'com.google.zxing:core:3.5.3'
+
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+}
+
+// 将 APK 导出到 D:/BarcodeGenerator 目录
+tasks.register("exportDebugApk", Copy) {
+    dependsOn("assembleDebug")
+    from(layout.buildDirectory.file("outputs/apk/debug/app-debug.apk"))
+    into(file('D:/BarcodeGenerator'))
+    rename { "BarcodeGenerator-debug.apk" }
+}
+
+tasks.register("exportReleaseApk", Copy) {
+    dependsOn("assembleRelease")
+    from(layout.buildDirectory.file("outputs/apk/release/app-release.apk"))
+    into(file('D:/BarcodeGenerator'))
+    rename { "BarcodeGenerator-release.apk" }
+}
